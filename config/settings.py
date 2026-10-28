@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC ##Settings
+# MAGIC #Settings
 # MAGIC
 # MAGIC `Primání konfigurace dimplomové práce, která je využívána napříč notebooky a vrstvami.`
 
