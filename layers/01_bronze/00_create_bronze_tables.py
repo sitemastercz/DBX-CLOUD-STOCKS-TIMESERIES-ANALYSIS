@@ -84,3 +84,34 @@ table_market = f"{SCHEMA_BRONZE}.L_IN_DAILY_MARKET_DATA"
 
 # Výpis konfigurace pro kontrolu uživatelem.
 print(f"Tabulka '{table_market}' byla úspěšně vytvořena (createOrReplace).")
+
+# COMMAND ----------
+
+# DBTITLE 1,Create L_IN_QUARTERLY_FUNDAMENTALS
+# Pojmenování tabulky.
+table_fundamentals = f"{SCHEMA_BRONZE}.L_IN_QUARTERLY_FUNDAMENTALS"
+
+# Definice tabulky.
+(
+    DeltaTable.createOrReplace(spark)
+    .tableName(table_fundamentals)
+    .comment("Surové kvartální finanční výkazy analyzovaných technologických firem pro fundamentální analýzu")
+    .addColumn("REPORT_DATE", DateType(), nullable=False, comment="Datum konce účetního čtvrtletí")
+    .addColumn("TICKER", StringType(), nullable=False, comment="Burzovní symbol")
+    .addColumn("STATEMENT_TYPE", StringType(), nullable=False, comment="Typ výkazu: INCOME_STMT, BALANCE_SHEET, CASH_FLOW")
+    .addColumn("METRIC_NAME", StringType(), nullable=False, comment="Název finančního ukazatele (např. TOTAL_REVENUE, NET_INCOME)")
+    .addColumn("METRIC_VALUE", DoubleType(), nullable=True, comment="Hodnota ukazatele v původní měně výkazu (USD)")
+    .addColumn("INSERTED_AT", TimestampType(), nullable=False, comment="UTC časové razítko stažení záznamu")
+    .addColumn("SOURCE_SYSTEM", StringType(), nullable=False, comment="Zdrojový systém")
+    # Rozdělení dat podle symbolu pro optimalizaci dotazování.
+    .partitionedBy("TICKER")
+    # Automatická optimalizace zápisu a slučování malých souborů v Delta Lake.
+    .property("delta.autoOptimize.optimizeWrite", "true")
+    .property("delta.autoOptimize.autoCompact", "true")
+    # Uživatelská vlastnost definující příslušnost k vrstvě Medallion architektury BRONZE.
+    .property("quality_layer", "BRONZE")
+    .execute()
+)
+
+# Výpis konfigurace pro kontrolu uživatelem.
+print(f"Tabulka '{table_fundamentals}' byla úspěšně vytvořena (createOrReplace).")
